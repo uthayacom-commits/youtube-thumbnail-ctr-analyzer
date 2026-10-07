@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Thumbnail Analyzer & CTR Score Report | ThumbHD</title>
+    <meta name="description" content="Get a professional report card for your thumbnails. Our 8-check algorithm analyzes contrast, safe zones, and text density to help you beat the YouTube algorithm.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- JSON-LD FAQ Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "What is the optimal YouTube thumbnail size and resolution?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The ideal YouTube thumbnail size is 1280 x 720 pixels, with a minimum width of 640 pixels. Your image should maintain a 16:9 aspect ratio to avoid black bars (letterboxing) in the search results. Additionally, ensure your file size is under the 2MB limit and saved in a standard format like .JPG, .PNG, or .WebP."
+        }
+      }, {
+        "@type": "Question",
+        "name": "How do I test my thumbnail before publishing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You should use a dedicated Thumbnail Analyzer like ThumbHD to run a technical diagnostic. A proper test includes checking for Safe Zone collisions, verifying that text is readable at small sizes (mobile context), and ensuring the contrast ratio is high enough to pop against YouTube's dark and light mode interfaces."
+        }
+      }, {
+        "@type": "Question",
+        "name": "What makes a high CTR thumbnail for gaming vs. vlogs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "High-CTR gaming thumbnails usually focus on \"high-energy\" visuals—think neon outlines, expressive \"reaction\" faces, and saturated colors. Vlog thumbnails, however, perform best when they feel \"authentic\" and \"human.\" They often rely on high-quality photography with a shallow depth of field, natural lighting, and a \"curiosity gap\" created by 1–3 power words that complement the video title."
+        }
+      }]
+    }
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bgVoid: 'var(--bg-void)',
+                        bgSurface: 'var(--bg-surface)',
+                        borderDim: 'var(--border-dim)',
+                        textPrimary: 'var(--text-primary)',
+                        textSecondary: 'var(--text-secondary)',
+                        accentRed: '#ff2d55',
+                        accentGreen: '#1ed760',
+                        accentAmber: '#ffb800',
+                        accentCyan: '#00d4ff'
+                    },
+                    fontFamily: {
+                        heading: ['"Inter"', 'sans-serif'],
+                        body: ['"Instrument Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Instrument Sans', sans-serif; background-color: var(--bg-base); color: var(--text-primary); }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass-card {
+            background: rgba(14, 14, 22, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid #1e1e2a;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(255, 45, 85, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .progress-strip {
+            height: 4px;
+            background: linear-gradient(90deg, #ff2d55, #ffb800, #1ed760, #00d4ff);
+            background-size: 200% 100%;
+            animation: gradientMove 2s linear infinite;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+        }
+
+        .check-item {
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .check-item.pass { border-left-color: var(--text-primary); }
+        .check-item.fail { border-left-color: var(--text-primary); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #030306; }
+        ::-webkit-scrollbar-thumb { background: #1e1e2a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6e6e94; }
+
+        /* ==========================================================================
+           Diagnostic Smart CTA Styles
+           ========================================================================== */
+        
+        .smart-cta-card {
+            background-color: var(--bg-base);
+            border-radius: 16px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            margin-top: 24px;
+        }
+        
+        .smart-cta-card.alert-critical {
+            border: 1px solid rgba(255, 45, 85, 0.4);
+            box-shadow: 0 0 24px rgba(255, 45, 85, 0.15);
+        }
+        
+        .smart-cta-card.alert-warning {
+            border: 1px solid rgba(255, 184, 0, 0.4);
+            box-shadow: 0 0 24px rgba(255, 184, 0, 0.15);
+        }
+        
+        .smart-cta-card.alert-success {
+            border: 1px solid rgba(30, 215, 96, 0.4);
+            box-shadow: 0 0 24px rgba(30, 215, 96, 0.15);
+        }
+        
+        .smart-cta-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .smart-cta-message {
+            font-size: 1.125rem;
+            color: var(--text-primary);
+            margin: 0;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+        
+        .smart-cta-btn {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.125rem;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 4px 14px rgba(255, 45, 85, 0.3);
+        }
+        
+        .smart-cta-btn:hover {
+            background-color: var(--bg-base);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 45, 85, 0.4);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-accentRed selection:text-white flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <div id="global-header"></div>
+    <div id="global-breadcrumbs"></div>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 py-8 md:py-12 flex flex-col items-center">
+        
+        <!-- Hero -->
+        <div class="text-center max-w-3xl mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-heading font-extrabold tracking-tight leading-none mb-4 md:mb-6">
+                YouTube Thumbnail Analyzer & CTR Tester
+            </h1>
+            <p class="text-base md:text-lg text-textSecondary">
+                Upload your thumbnail or paste a URL. Instantly test contrast, safe zones, and text density to maximize your click-through rate.
+            </p>
+        </div>
+
+        <!-- Tool Hub (Upload) -->
+        <div class="w-full max-w-3xl glass-card p-6 md:p-8 mb-8 md:mb-12 relative overflow-hidden">
+            <div id="progress-container" class="absolute top-0 left-0 w-full h-1 bg-bgVoid hidden">
+                <div id="progress-bar" class="progress-strip"></div>
+            </div>
+            
+            <div class="flex flex-col items-center justify-center">
+                <label class="w-full md:w-auto cursor-pointer bg-accentRed hover:bg-red-600 text-white font-heading font-semibold rounded-xl px-8 py-4 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,45,85,0.3)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload Image
+                    <input type="file" id="upload-input" accept="image/*" class="sr-only">
+                </label>
+            </div>
+            <p class="text-center text-textSecondary text-xs mt-6 font-mono">Over 10,000+ thumbnails analyzed for top-tier creators</p>
+        </div>
+
+        <!-- Dashboard (Hidden initially) -->
+        <div id="dashboard" class="w-full hidden flex-col gap-8 mb-20 animate-fade-in items-center">
+            
+            <!-- Top Row: Score Board & Preview -->
+            <div class="flex flex-col lg:flex-row gap-8 items-stretch justify-center w-full max-w-[1200px]">
+                
+                <!-- Left: Score Board -->
+                <div class="glass-card p-6 md:p-8 flex flex-col items-center justify-center w-full lg:w-[300px] shrink-0">
+                    <!-- Circular Progress -->
+                    <div class="relative w-40 h-40 md:w-48 md:h-48 mb-6">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#1e1e2a" stroke-width="8"></circle>
+                            <circle id="score-circle" cx="50" cy="50" r="40" fill="none" stroke="#ffb800" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round" class="transition-all duration-1000 ease-out"></circle>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="overall-score-text" class="text-4xl md:text-5xl font-heading font-bold text-accentAmber">--</span>
+                            <span class="text-xs md:text-sm text-textSecondary font-mono mt-1">/ 100</span>
+                        </div>
+                    </div>
+                    
+                    <div id="score-status" class="flex items-center gap-2 text-accentAmber font-bold text-lg mb-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Analyzing...
+                    </div>
+                    <div id="score-subtext" class="text-accentGreen text-sm font-mono">
+                        --
+                    </div>
+                </div>
+
+                <!-- Right: Preview & Overlays -->
+                <div class="flex flex-col gap-4 flex-1 max-w-[865px] w-full">
+                    <div class="glass-card p-4 flex-1 flex flex-col">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                            <h3 class="font-heading font-bold text-lg">Preview</h3>
+                            <div class="flex gap-2 w-full sm:w-auto">
+                                <button id="toggle-thirds" class="flex-1 sm:flex-none px-3 py-1.5 rounded bg-bgVoid border border-borderDim text-[10px] sm:text-xs font-mono hover:border-accentCyan transition-colors">Rule of Thirds</button>
+                                <button id="toggle-safe" class="flex-1 sm:flex-none px-3 py-1.5 rounded bg-bgVoid border border-borderDim text-[10px] sm:text-xs font-mono hover:border-accentRed transition-colors">Safe Zones</button>
+                            </div>
+                        </div>
+                        <div class="relative w-full bg-bgVoid rounded-lg overflow-hidden border border-borderDim flex items-center justify-center group" style="aspect-ratio: 865/485; max-height: 485px;">
+                            <canvas id="preview-canvas" class="w-full h-full object-contain"></canvas>
+                            <div id="canvas-tooltip" class="absolute hidden pointer-events-none bg-bgSurface border border-borderDim p-3 rounded-lg shadow-2xl z-50 max-w-[200px]">
+                                <div id="tooltip-title" class="text-xs font-bold text-accentRed mb-1 uppercase tracking-wider">Dead Zone</div>
+                                <div id="tooltip-msg" class="text-[10px] text-textSecondary leading-tight">YouTube UI elements will obscure this area.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Row: 8-Check Results -->
+            <div class="w-full max-w-[1200px]">
+                <div id="results-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Results injected via JS -->
+                </div>
+            </div>
+
+            <!-- Diagnostic CTA Container -->
+            <div id="diagnostic-cta-container" class="w-full max-w-[1200px] mt-8"></div>
+
+            <!-- Mobile Reality Check -->
+            <div class="w-full max-w-[1200px] glass-card flex flex-col mt-4">
+                <div class="flex justify-between items-center p-5 border-b border-borderDim">
+                    <h3 class="text-xs font-mono text-textSecondary uppercase tracking-[0.2em]">Mobile Reality Check</h3>
+                    <span class="text-sm text-textSecondary">What viewers actually see</span>
+                </div>
+                <div class="p-8 flex flex-wrap justify-center items-end gap-10 md:gap-16">
+                    <!-- Feed -->
+                    <div class="flex flex-col items-center gap-4">
+                        <img class="reality-check-img rounded-lg border border-borderDim object-cover shadow-lg" style="width: 210px; height: 118px;" src="" alt="YouTube Feed">
+                        <div class="text-center">
+                            <div class="text-sm font-medium text-textPrimary mb-1">YouTube Feed</div>
+                            <div class="text-[10px] font-mono text-textSecondary">210×118px · Most common</div>
+                        </div>
+                    </div>
+                    <!-- Search -->
+                    <div class="flex flex-col items-center gap-4">
+                        <img class="reality-check-img rounded-lg border border-borderDim object-cover shadow-lg" style="width: 168px; height: 94px;" src="" alt="YouTube Search">
+                        <div class="text-center">
+                            <div class="text-sm font-medium text-textPrimary mb-1">YouTube Search</div>
+                            <div class="text-[10px] font-mono text-textSecondary">168×94px · High intent</div>
+                        </div>
+                    </div>
+                    <!-- Suggested -->
+                    <div class="flex flex-col items-center gap-4">
+                        <img class="reality-check-img rounded-md border border-borderDim object-cover shadow-lg" style="width: 120px; height: 68px;" src="" alt="Suggested">
+                        <div class="text-center">
+                            <div class="text-sm font-medium text-textPrimary mb-1">Suggested</div>
+                            <div class="text-[10px] font-mono text-textSecondary">120×68px · Sidebar</div>
+                        </div>
+                    </div>
+                    <!-- Notification -->
+                    <div class="flex flex-col items-center gap-4">
+                        <img class="reality-check-img rounded border border-borderDim object-cover shadow-lg" style="width: 48px; height: 27px;" src="" alt="Notification">
+                        <div class="text-center">
+                            <div class="text-sm font-medium text-textPrimary mb-1">Notification</div>
+                            <div class="text-[10px] font-mono text-textSecondary">48×27px · Push alert</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Plan (Injected via JS) -->
+            <div id="action-plan-container" class="w-full max-w-[1200px] mt-8 hidden flex-col gap-6">
+                <!-- Content generated in JS -->
+            </div>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="w-full max-w-5xl mt-12 space-y-16">
+            
+            <section id="how-it-works">
+                <h2 class="text-3xl md:text-4xl font-heading font-bold mb-12 text-center">How Our YouTube Thumbnail Tester Works</h2>
+                
+                <div class="max-w-4xl mx-auto text-center mb-16">
+                    <p class="text-xl text-textSecondary leading-relaxed">
+                        Our diagnostic engine doesn't just "look" at your image—it deconstructs it using the same visual processing logic as the YouTube algorithm. By simulating different viewing environments, we ensure your design converts impressions into clicks.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-8">
+                    <!-- Point 1 -->
+                    <div class="glass-card p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start hover:border-accentCyan/40 transition-colors group">
+                        <div class="w-16 h-16 shrink-0 rounded-2xl bg-accentCyan/10 flex items-center justify-center text-accentCyan text-3xl font-bold font-heading border border-accentCyan/20 group-hover:bg-accentCyan/20 transition-colors">1</div>
+                        <div>
+                            <h3 class="text-2xl font-heading font-bold mb-4 text-textPrimary">Contrast & Readability Check</h3>
+                            <p class="text-textSecondary leading-relaxed text-lg">
+                                Visibility is the first step toward a click. Our tool analyzes the hex codes of your primary elements to calculate a precise contrast ratio based on WCAG 2.1 standards. We specifically check for mobile visibility, ensuring that your text and subjects remain distinct even on small screens or devices with lowered brightness. If your foreground and background colors bleed together, we’ll flag it so you can fix it before publishing.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Point 2 -->
+                    <div class="glass-card p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start hover:border-accentRed/40 transition-colors group">
+                        <div class="w-16 h-16 shrink-0 rounded-2xl bg-accentRed/10 flex items-center justify-center text-accentRed text-3xl font-bold font-heading border border-accentRed/20 group-hover:bg-accentRed/20 transition-colors">2</div>
+                        <div>
+                            <h3 class="text-2xl font-heading font-bold mb-4 text-textPrimary">Safe Zone Verification</h3>
+                            <p class="text-textSecondary leading-relaxed text-lg">
+                                There is nothing worse than a perfect thumbnail being ruined by the YouTube UI layout. YouTube automatically places a duration badge (the timestamp) in the bottom-right corner and various icons depending on the device. Our safe zone verification maps these overlays onto your design, ensuring your key hooks, faces, and text aren't buried under the timestamp or "Watch Later" icons.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Point 3 -->
+                    <div class="glass-card p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start hover:border-accentAmber/40 transition-colors group">
+                        <div class="w-16 h-16 shrink-0 rounded-2xl bg-accentAmber/10 flex items-center justify-center text-accentAmber text-3xl font-bold font-heading border border-accentAmber/20 group-hover:bg-accentAmber/20 transition-colors">3</div>
+                        <div>
+                            <h3 class="text-2xl font-heading font-bold mb-4 text-textPrimary">Mobile CTR Preview</h3>
+                            <p class="text-textSecondary leading-relaxed text-lg">
+                                The vast majority of homepage impressions occur on mobile devices. A thumbnail that looks great on a desktop monitor often becomes unreadable in the suggested feed on a smartphone. We generate real-time previews of your design at various scales—from notification size to full-screen suggested—allowing you to see exactly what your audience sees before you commit to the upload.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-12">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-3xl md:text-4xl font-heading font-bold mb-6 text-center">Why Thumbnail Optimization is the "Silent Growth Engine" of YouTube</h2>
+                    <p class="text-lg text-textSecondary leading-relaxed mb-6 text-center">
+                        In the hyper-competitive world of digital content, your thumbnail isn't just a decoration—it is the packaging for your product. You can spend 40 hours editing the perfect video, but if the "packaging" doesn't entice a click, that effort is essentially invisible.
+                    </p>
+                    <p class="text-lg text-textSecondary leading-relaxed italic border-l-4 border-accentCyan pl-6 py-4 bg-accentCyan/5 rounded-r-lg max-w-2xl mx-auto">
+                        Optimizing your thumbnails is about mastering the science of the First Impression.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-card p-8">
+                        <h3 class="text-xl font-heading font-bold mb-4 text-textPrimary">The Mathematical Logic: Impressions vs. Clicks</h3>
+                        <p class="text-textSecondary text-sm leading-relaxed mb-4">
+                            YouTube measures success through a specific metric called Click-Through Rate (CTR). This is a simple but brutal formula:
+                        </p>
+                        <div class="bg-bgVoid p-4 rounded-lg border border-borderDim font-mono text-accentCyan text-center mb-4 text-lg">
+                            CTR = (Total Clicks / Total Impressions) x 100
+                        </div>
+                        <p class="text-textSecondary text-sm leading-relaxed">
+                            If 1,000 people see your video in their feed (Impressions) but only 10 people click, your CTR is a low 1%. A low CTR tells the YouTube algorithm that your content isn't relevant or interesting, causing it to stop showing your video to new people.
+                        </p>
+                        <p class="mt-4 text-accentAmber font-bold text-sm">Conversely, a high CTR acts as a "Green Light" for growth.</p>
+                    </div>
+
+                    <div class="glass-card p-8">
+                        <h3 class="text-xl font-heading font-bold mb-4 text-textPrimary">The Feedback Loop: Satisfying the Algorithm</h3>
+                        <p class="text-textSecondary text-sm leading-relaxed mb-4">
+                            The YouTube recommendation engine is a massive feedback loop. When you optimize a thumbnail for high-impact visibility:
+                        </p>
+                        <ul class="space-y-3">
+                            <li class="flex gap-3 text-sm text-textSecondary">
+                                <span class="text-accentCyan font-bold">1.</span>
+                                <span><strong class="text-textPrimary">Increased Engagement:</strong> Users click more frequently because of high contrast and clear visual hooks.</span>
+                            </li>
+                            <li class="flex gap-3 text-sm text-textSecondary">
+                                <span class="text-accentCyan font-bold">2.</span>
+                                <span><strong class="text-textPrimary">Algorithm Validation:</strong> The system sees the spike in CTR and categorizes your video as "High Quality."</span>
+                            </li>
+                            <li class="flex gap-3 text-sm text-textSecondary">
+                                <span class="text-accentCyan font-bold">3.</span>
+                                <span><strong class="text-textPrimary">Expanded Reach:</strong> YouTube "pushes" your video to a wider, broader audience (the "Snowball Effect").</span>
+                            </li>
+                            <li class="flex gap-3 text-sm text-textSecondary">
+                                <span class="text-accentCyan font-bold">4.</span>
+                                <span><strong class="text-textPrimary">Exponential Growth:</strong> More impressions lead to more subscribers and higher long-term revenue.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 md:p-12">
+                    <h3 class="text-2xl font-heading font-bold mb-8 text-center">Psychology of the Click: Curiosity Gaps and Emotional Hooks</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="space-y-3">
+                            <div class="w-10 h-10 rounded-full bg-accentRed/10 flex items-center justify-center text-accentRed font-bold">1</div>
+                            <h4 class="font-bold text-textPrimary">Faces and Emotion</h4>
+                            <p class="text-textSecondary text-xs leading-relaxed">
+                                Humans are hardwired to scan for human expressions. A "shocked" or "determined" face triggers an emotional response that text alone cannot achieve.
+                            </p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="w-10 h-10 rounded-full bg-accentCyan/10 flex items-center justify-center text-accentCyan font-bold">2</div>
+                            <h4 class="font-bold text-textPrimary">High Contrast</h4>
+                            <p class="text-textSecondary text-xs leading-relaxed">
+                                Bright colors and bold outlines help your subject pop against the default white or dark mode of the YouTube app.
+                            </p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="w-10 h-10 rounded-full bg-accentAmber/10 flex items-center justify-center text-accentAmber font-bold">3</div>
+                            <h4 class="font-bold text-textPrimary">The Curiosity Gap</h4>
+                            <p class="text-textSecondary text-xs leading-relaxed">
+                                A great thumbnail provides just enough information to intrigue the viewer, but leaves a "gap" that can only be closed by clicking the video.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="glass-card p-8 border-l-4 border-accentCyan">
+                        <h3 class="text-xl font-heading font-bold mb-4 text-textPrimary">The Mobile-First Reality</h3>
+                        <p class="text-textSecondary text-sm leading-relaxed">
+                            Over 70% of YouTube views now happen on mobile devices. This means your thumbnail must be "readable" at the size of a postage stamp. Optimization ensures that your text isn't too small, your colors aren't "muddy," and your key subject isn't hidden by the YouTube duration badge in the bottom-right corner.
+                        </p>
+                    </div>
+                    <div class="glass-card p-8 border-l-4 border-accentRed">
+                        <h3 class="text-xl font-heading font-bold mb-4 text-textPrimary">Competitive Advantage in the "Suggested" Sidebar</h3>
+                        <p class="text-textSecondary text-sm leading-relaxed">
+                            When someone finishes watching a video, the "Suggested" sidebar is a battleground. Your thumbnail is competing against 5–10 other videos simultaneously. Optimization is what gives you the edge to "steal" that viewer’s attention away from your competitors.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="max-w-3xl mx-auto text-center pt-8">
+                    <p class="text-xl font-heading font-medium text-textPrimary leading-relaxed">
+                        By using a thumbnail analyzer, you move from "hoping" for views to <span class="text-accentCyan">"engineering"</span> them. You are ensuring that every pixel is working toward one goal: getting the click that starts the journey.
+                    </p>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-3xl font-heading font-bold mb-8 text-center">Frequently Asked Questions</h2>
+                <div class="space-y-4 max-w-3xl mx-auto">
+                    <div class="glass-card p-6">
+                        <h3 class="font-heading font-bold text-lg mb-2">What is the optimal YouTube thumbnail size and resolution?</h3>
+                        <p class="text-textSecondary text-sm">The ideal YouTube thumbnail size is 1280 x 720 pixels, with a minimum width of 640 pixels. Your image should maintain a 16:9 aspect ratio to avoid black bars (letterboxing) in the search results. Additionally, ensure your file size is under the 2MB limit and saved in a standard format like .JPG, .PNG, or .WebP.</p>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h3 class="font-heading font-bold text-lg mb-2">How do I test my thumbnail before publishing?</h3>
+                        <p class="text-textSecondary text-sm">You should use a dedicated Thumbnail Analyzer like ThumbHD to run a technical diagnostic. A proper test includes checking for Safe Zone collisions, verifying that text is readable at small sizes (mobile context), and ensuring the contrast ratio is high enough to pop against YouTube's dark and light mode interfaces.</p>
+                    </div>
+                    <div class="glass-card p-6">
+                        <h3 class="font-heading font-bold text-lg mb-2">What makes a high CTR thumbnail for gaming vs. vlogs?</h3>
+                        <p class="text-textSecondary text-sm">High-CTR gaming thumbnails usually focus on "high-energy" visuals—think neon outlines, expressive "reaction" faces, and saturated colors. Vlog thumbnails, however, perform best when they feel "authentic" and "human." They often rely on high-quality photography with a shallow depth of field, natural lighting, and a "curiosity gap" created by 1–3 power words that complement the video title.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Dynamic Tool Grid -->
+    <div id="dynamic-tool-grid" class="max-w-7xl mx-auto px-4 mt-8"></div>
+
+    <!-- Footer -->
+    <div id="global-footer"></div>
+
+    <!-- JS Engine -->
+    <script>
+        class ThumbHD_Engine {
+            constructor(imageElement, fileObj) {
+                this.img = imageElement;
+                this.file = fileObj;
+                this.canvas = document.createElement('canvas');
+                this.width = 320;
+                this.height = 180;
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+                this.ctx.drawImage(this.img, 0, 0, this.width, this.height);
+                this.imageData = this.ctx.getImageData(0, 0, this.width, this.height);
+                this.data = this.imageData.data;
+            }
+
+            async runAll() {
+                const results = [
+                    { name: "Contrast", weight: 15, ...this.checkContrast() },
+                    { name: "Text Contrast", weight: 15, ...this.checkTextContrast() },
+                    { name: "Subject", weight: 15, ...this.checkSubject() },
+                    { name: "Text Density", weight: 15, ...this.checkTextDensity() },
+                    { name: "Vibrancy", weight: 12, ...this.checkVibrancy() },
+                    { name: "Brightness", weight: 10, ...this.checkBrightness() },
+                    { name: "Safe Zone", weight: 10, ...this.checkSafeZone() },
+                    { name: "Sharpness", weight: 5, ...this.checkSharpness() },
+                    { name: "Resolution", weight: 3, ...this.checkResolution() }
+                ];
+
+                let totalScore = 0;
+                let maxScore = 0;
+                results.forEach(r => {
+                    maxScore += r.weight;
+                    if (r.pass) totalScore += r.weight;
+                });
+
+                return {
+                    score: Math.round((totalScore / maxScore) * 100),
+                    details: results
+                };
+            }
+
+            getLuminance(r, g, b) {
+                let [rs, gs, bs] = [r/255, g/255, b/255].map(c => {
+                    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+                });
+                return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+            }
+
+            checkContrast() {
+                let lMax = 0, lMin = 1;
+                for (let i = 0; i < this.data.length; i += 4) {
+                    let l = this.getLuminance(this.data[i], this.data[i+1], this.data[i+2]);
+                    if (l > lMax) lMax = l;
+                    if (l < lMin) lMin = l;
+                }
+                let ratio = (lMax + 0.05) / (lMin + 0.05);
+                let pass = ratio >= 7.0;
+                return { 
+                    pass, 
+                    value: ratio.toFixed(1) + ':1', 
+                    msg: pass ? "Excellent contrast ratio." : "FAIL: Thumbnail is invisible in the feed. Add a 80% black drop shadow or use Electric Yellow (#FFE600) on dark backgrounds." 
+                };
+            }
+
+            checkTextContrast() {
+                const w = this.width;
+                const h = this.height;
+                const d = this.data;
+                let gray = new Float32Array(w * h);
+                for (let i = 0; i < w * h; i++) {
+                    let idx = i * 4;
+                    gray[i] = d[idx]*0.299 + d[idx+1]*0.587 + d[idx+2]*0.114;
+                }
+                let edges = new Float32Array(w * h);
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        let idx = y * w + x;
+                        let gx = -gray[idx - w - 1] + gray[idx - w + 1] -2*gray[idx - 1] + 2*gray[idx + 1] -gray[idx + w - 1] + gray[idx + w + 1];
+                        let gy = -gray[idx - w - 1] - 2*gray[idx - w] - gray[idx - w + 1] +gray[idx + w - 1] + 2*gray[idx + w] + gray[idx + w + 1];
+                        edges[idx] = Math.sqrt(gx*gx + gy*gy);
+                    }
+                }
+
+                let blockSize = 16;
+                let cols = Math.floor(w / blockSize);
+                let rows = Math.floor(h / blockSize);
+                let blockDensities = [];
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        let sum = 0;
+                        for (let y = 0; y < blockSize; y++) {
+                            for (let x = 0; x < blockSize; x++) {
+                                sum += edges[(r * blockSize + y) * w + (c * blockSize + x)];
+                            }
+                        }
+                        blockDensities.push({ r, c, density: sum });
+                    }
+                }
+                blockDensities.sort((a, b) => b.density - a.density);
+                let topBlocks = blockDensities.slice(0, Math.max(1, Math.floor(blockDensities.length * 0.1)));
+
+                let fgLumaSum = 0, fgCount = 0;
+                let bgLumaSum = 0, bgCount = 0;
+
+                topBlocks.forEach(b => {
+                    for (let y = 0; y < blockSize; y++) {
+                        for (let x = 0; x < blockSize; x++) {
+                            let px = (b.r * blockSize + y) * w + (b.c * blockSize + x);
+                            let luma = gray[px];
+                            if (edges[px] > 80) { 
+                                fgLumaSum += luma;
+                                fgCount++;
+                            } else {
+                                bgLumaSum += luma;
+                                bgCount++;
+                            }
+                        }
+                    }
+                });
+
+                if (fgCount < 10 || bgCount < 10) {
+                    return { pass: true, value: 'N/A', msg: "No significant text detected. If you have text, make it bolder!" };
+                }
+
+                const toRelLume = (l) => {
+                    let c = l / 255;
+                    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+                };
+                
+                let L1 = toRelLume(fgLumaSum / fgCount);
+                let L2 = toRelLume(bgLumaSum / bgCount);
+                if (L1 < L2) [L1, L2] = [L2, L1];
+                
+                let ratio = (L1 + 0.05) / (L2 + 0.05);
+                let pass = ratio >= 4.5; 
+
+                return {
+                    pass,
+                    value: ratio.toFixed(1) + ':1',
+                    msg: pass ? "Excellent text-to-background contrast." : "FAIL: Text is hard to read. Add a dark stroke, outer glow, or drop shadow to make words pop."
+                };
+            }
+
+            checkSubject() {
+                let cx = this.width / 2, cy = this.height / 2;
+                let rSq = Math.pow(this.height * 0.22, 2);
+                let skinPixels = 0, totalPixels = 0;
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        if (Math.pow(x - cx, 2) + Math.pow(y - cy, 2) <= rSq) {
+                            totalPixels++;
+                            let i = (y * this.width + x) * 4;
+                            let r = this.data[i], g = this.data[i+1], b = this.data[i+2];
+                            if (r > 95 && g > 40 && b > 20 && r > g && r > b && Math.abs(r - g) > 15) {
+                                skinPixels++;
+                            }
+                        }
+                    }
+                }
+                let pct = skinPixels / totalPixels;
+                let pass = pct > 0.05; 
+                return { 
+                    pass, 
+                    value: (pct*100).toFixed(1) + '%', 
+                    msg: pass ? "Subject/Face detected in center." : "FAIL: Human connection missing. Faces with 'Shock' or 'Intense Focus' trigger mirror neurons and lift CTR by 20%." 
+                };
+            }
+
+            checkTextDensity() {
+                const w = this.width;
+                const h = this.height;
+                const d = this.data;
+                
+                // 1. Convert to grayscale
+                let gray = new Float32Array(w * h);
+                for (let i = 0; i < w * h; i++) {
+                    let idx = i * 4;
+                    gray[i] = d[idx]*0.299 + d[idx+1]*0.587 + d[idx+2]*0.114;
+                }
+
+                // 2. Sobel Edge Detection
+                let edges = new Uint8Array(w * h);
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        let idx = y * w + x;
+                        let gx = -gray[idx - w - 1] + gray[idx - w + 1] 
+                                 -2*gray[idx - 1] + 2*gray[idx + 1] 
+                                 -gray[idx + w - 1] + gray[idx + w + 1];
+                        let gy = -gray[idx - w - 1] - 2*gray[idx - w] - gray[idx - w + 1]
+                                 +gray[idx + w - 1] + 2*gray[idx + w] + gray[idx + w + 1];
+                        let mag = Math.sqrt(gx*gx + gy*gy);
+                        
+                        if (mag > 90) { 
+                            edges[idx] = 1;
+                        }
+                    }
+                }
+
+                // 3. Grid-based Density Analysis (8x8 blocks)
+                let blockSize = 8;
+                let cols = Math.floor(w / blockSize);
+                let rows = Math.floor(h / blockSize);
+                let textBlocks = new Uint8Array(cols * rows);
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        let edgeCount = 0;
+                        for (let y = 0; y < blockSize; y++) {
+                            for (let x = 0; x < blockSize; x++) {
+                                let ey = r * blockSize + y;
+                                let ex = c * blockSize + x;
+                                if (ey < h && ex < w && edges[ey * w + ex] === 1) {
+                                    edgeCount++;
+                                }
+                            }
+                        }
+                        // Text patterns in 8x8 blocks usually have 6-40 edge pixels
+                        if (edgeCount >= 5 && edgeCount <= 45) {
+                            textBlocks[r * cols + c] = 1;
+                        }
+                    }
+                }
+
+                // 4. Morphological Dilation (Horizontal focus to merge letters into words)
+                let dilatedBlocks = new Uint8Array(cols * rows);
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        if (textBlocks[r * cols + c] === 1) {
+                            for (let dr = -1; dr <= 1; dr++) {
+                                for (let dc = -2; dc <= 2; dc++) {
+                                    let nr = r + dr, nc = c + dc;
+                                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                                        dilatedBlocks[nr * cols + nc] = 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 5. Connected Components (Cluster Counting)
+                let visited = new Uint8Array(cols * rows);
+                let clusterCount = 0;
+                for (let i = 0; i < cols * rows; i++) {
+                    if (dilatedBlocks[i] === 1 && visited[i] === 0) {
+                        clusterCount++;
+                        let queue = [i];
+                        visited[i] = 1;
+                        while(queue.length > 0) {
+                            let curr = queue.shift();
+                            let cr = Math.floor(curr / cols);
+                            let cc = curr % cols;
+                            for (let dr = -1; dr <= 1; dr++) {
+                                for (let dc = -1; dc <= 1; dc++) {
+                                    let nr = cr + dr, nc = cc + dc;
+                                    let nidx = nr * cols + nc;
+                                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && dilatedBlocks[nidx] === 1 && visited[nidx] === 0) {
+                                        visited[nidx] = 1;
+                                        queue.push(nidx);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let textAreaCount = 0;
+                for (let i = 0; i < cols * rows; i++) {
+                    if (dilatedBlocks[i] === 1) textAreaCount++;
+                }
+                let coverage = textAreaCount / (cols * rows);
+                
+                // 6. Evaluation
+                let pass = false;
+                let msg = "";
+                
+                if (clusterCount === 0) {
+                    pass = true;
+                    msg = "No text detected. Consider adding a hook!";
+                } else if (clusterCount <= 4) {
+                    pass = coverage < 0.40; // Allow very large text if few words
+                    msg = pass ? "Excellent! Bold, readable text." : "FAIL: Text is too large! It obscures your subject.";
+                } else if (clusterCount <= 7) {
+                    pass = coverage < 0.25;
+                    msg = pass ? "Good word count, but keep it punchy." : "FAIL: Too many words for this size. Simplify your message.";
+                } else {
+                    pass = false;
+                    msg = "FAIL: Text overload! Too many words detected. Cut to 3-5 power words.";
+                }
+
+                return { 
+                    pass, 
+                    value: clusterCount + " Areas", 
+                    msg: msg
+                };
+            }
+
+            checkVibrancy() {
+                // Hasler and Suesstrunk Colorfulness Metric
+                let rgSum = 0, ybSum = 0;
+                let rgSqSum = 0, ybSqSum = 0;
+                let pixels = this.width * this.height;
+                
+                for (let i = 0; i < this.data.length; i += 4) {
+                    let r = this.data[i], g = this.data[i+1], b = this.data[i+2];
+                    let rg = r - g;
+                    let yb = 0.5 * (r + g) - b;
+                    
+                    rgSum += rg;
+                    ybSum += yb;
+                    rgSqSum += rg * rg;
+                    ybSqSum += yb * yb;
+                }
+                
+                let muRG = rgSum / pixels;
+                let muYB = ybSum / pixels;
+                let sigRG = Math.sqrt(Math.max(0, (rgSqSum / pixels) - (muRG * muRG)));
+                let sigYB = Math.sqrt(Math.max(0, (ybSqSum / pixels) - (muYB * muYB)));
+                
+                let colorfulness = Math.sqrt(sigRG * sigRG + sigYB * sigYB) + 0.3 * Math.sqrt(muRG * muRG + muYB * muYB);
+                
+                // Scale colorfulness to a 0-100 range for display (approximate)
+                let score = Math.min(100, (colorfulness / 80) * 100);
+                let pass = score > 45; 
+                
+                return { 
+                    pass, 
+                    value: score.toFixed(1) + '%', 
+                    msg: pass ? "Vibrant, eye-catching colors." : "FAIL: Colors are 'Muddy.' Boost saturation by +25 and vibrance by +15 to stand out against YouTube’s UI." 
+                };
+            }
+
+            checkBrightness() {
+                let lumas = [];
+                let bSum = 0, weightSum = 0;
+                let cellH = this.height / 3;
+                
+                for (let y = 0; y < this.height; y++) {
+                    for (let x = 0; x < this.width; x++) {
+                        let i = (y * this.width + x) * 4;
+                        let luma = 0.299*this.data[i] + 0.587*this.data[i+1] + 0.114*this.data[i+2];
+                        lumas.push(luma);
+                        
+                        let cy = Math.floor(y / cellH);
+                        let weight = (cy === 1) ? 2.5 : 1.0; 
+                        bSum += luma * weight;
+                        weightSum += weight;
+                    }
+                }
+                
+                let avgB = bSum / weightSum;
+                lumas.sort((a, b) => a - b);
+                let p90 = lumas[Math.floor(lumas.length * 0.9)];
+                let p10 = lumas[Math.floor(lumas.length * 0.1)];
+                
+                let pass = avgB > 90 && p90 > 160 && (p90 - p10 > 60);
+                
+                let statusMsg = "";
+                if (!pass) {
+                    if (avgB <= 90) statusMsg = "FAIL: Too Dark! Increase Exposure so the focal point is near-white.";
+                    else if (p90 <= 160) statusMsg = "FAIL: Low Dynamic Range! Increase Highlights and Whites to create a clear focal point.";
+                    else if (p90 - p10 <= 60) statusMsg = "FAIL: Flat Image! Increase Contrast and Blacks to add depth.";
+                    else statusMsg = "FAIL: Exposure issues detected. Adjust brightness and contrast.";
+                } else {
+                    statusMsg = "Good exposure and dynamic range for mobile.";
+                }
+
+                return { 
+                    pass, 
+                    value: avgB.toFixed(1), 
+                    msg: statusMsg
+                };
+            }
+
+            checkSafeZone() {
+                let startX = Math.floor(this.width * 0.85);
+                let startY = Math.floor(this.height * 0.88);
+                let lumas = [];
+                for (let y = startY; y < this.height; y++) {
+                    for (let x = startX; x < this.width; x++) {
+                        let i = (y * this.width + x) * 4;
+                        lumas.push(0.299*this.data[i] + 0.587*this.data[i+1] + 0.114*this.data[i+2]);
+                    }
+                }
+                let mean = lumas.reduce((a,b)=>a+b,0) / lumas.length;
+                let variance = lumas.reduce((a,b)=>a+Math.pow(b-mean,2),0) / lumas.length;
+                let stdDev = Math.sqrt(variance);
+                let pass = stdDev < 40; 
+                return { 
+                    pass, 
+                    value: stdDev.toFixed(1), 
+                    msg: pass ? "Safe zone is clear." : "FAIL: UI Collision! Move critical faces/text away from the bottom-right 15%—YouTube's duration badge will hide it." 
+                };
+            }
+
+            checkSharpness() {
+                let gray = new Uint8Array(this.width * this.height);
+                for (let i = 0; i < gray.length; i++) {
+                    let idx = i * 4;
+                    gray[i] = 0.299*this.data[idx] + 0.587*this.data[idx+1] + 0.114*this.data[idx+2];
+                }
+                let laplacian = new Int16Array(this.width * this.height);
+                let sum = 0;
+                for (let y = 1; y < this.height - 1; y++) {
+                    for (let x = 1; x < this.width - 1; x++) {
+                        let i = y * this.width + x;
+                        let val = gray[i-this.width] + gray[i-1] + gray[i+1] + gray[i+this.width] - 4*gray[i];
+                        laplacian[i] = val;
+                        sum += val;
+                    }
+                }
+                let mean = sum / laplacian.length;
+                let variance = 0;
+                for (let i = 0; i < laplacian.length; i++) {
+                    variance += Math.pow(laplacian[i] - mean, 2);
+                }
+                variance /= laplacian.length;
+                let pass = variance > 50;
+                return { 
+                    pass, 
+                    value: variance.toFixed(1), 
+                    msg: pass ? "Crisp edges detected." : "FAIL: Amateur Signal. Apply a Smart Sharpen filter (Amount 50%). Blurry edges signal low production value." 
+                };
+            }
+
+            checkResolution() {
+                let w = this.img.naturalWidth;
+                let h = this.img.naturalHeight;
+                let ratio = w / h;
+                let is169 = Math.abs(ratio - (16/9)) < 0.05;
+                let isHD = w >= 1280 && h >= 720;
+                let sizePass = this.file ? (this.file.size <= 2 * 1024 * 1024) : true;
+                let pass = is169 && isHD && sizePass;
+                return { 
+                    pass, 
+                    value: `${w}x${h}`, 
+                    msg: pass ? "Perfect resolution and aspect ratio." : "FAIL: Aspect Ratio Error. Resize to 1280x720px to avoid ugly black 'letterbox' bars." 
+                };
+            }
+        }
+
+        // UI Logic
+        const uploadInput = document.getElementById('upload-input');
+        const dashboard = document.getElementById('dashboard');
+        const previewCanvas = document.getElementById('preview-canvas');
+        const ctx = previewCanvas.getContext('2d');
+        const resultsList = document.getElementById('results-list');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        
+        let currentImage = null;
+        let currentFile = null;
+        let showThirds = false;
+        let showSafe = false;
+        let analysisResults = null;
+
+        document.getElementById('toggle-thirds').addEventListener('click', (e) => {
+            showThirds = !showThirds;
+            e.target.classList.toggle('border-accentCyan', showThirds);
+            drawPreview();
+        });
+
+        document.getElementById('toggle-safe').addEventListener('click', (e) => {
+            showSafe = !showSafe;
+            e.target.classList.toggle('border-accentRed', showSafe);
+            drawPreview();
+        });
+
+        const tooltip = document.getElementById('canvas-tooltip');
+        const tooltipTitle = document.getElementById('tooltip-title');
+        const tooltipMsg = document.getElementById('tooltip-msg');
+
+        previewCanvas.addEventListener('mousemove', (e) => {
+            if (!showSafe || !currentImage) {
+                tooltip.classList.add('hidden');
+                return;
+            }
+
+            const rect = previewCanvas.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * previewCanvas.width;
+            const y = ((e.clientY - rect.top) / rect.height) * previewCanvas.height;
+            
+            const w = previewCanvas.width;
+            const h = previewCanvas.height;
+            
+            // Check zones
+            const durW = w * 0.16;
+            const durH = h * 0.13;
+            const trW = w * 0.12;
+            const trH = h * 0.25;
+
+            let inZone = false;
+            if (x > w - durW && y > h - durH) {
+                tooltipTitle.innerText = 'DURATION BADGE';
+                tooltipTitle.className = 'text-xs font-bold text-accentRed mb-1 uppercase tracking-wider';
+                tooltipMsg.innerText = 'The timestamp (e.g., 10:05) is always placed here. Move faces or text away.';
+                inZone = true;
+            } else if (x > w - trW && y < trH) {
+                tooltipTitle.innerText = 'UI OVERLAYS';
+                tooltipTitle.className = 'text-xs font-bold text-accentAmber mb-1 uppercase tracking-wider';
+                tooltipMsg.innerText = 'Watch Later and Add to Queue icons appear here on hover.';
+                inZone = true;
+            } else if (y > h - (h * 0.05)) {
+                tooltipTitle.innerText = 'PROGRESS BAR';
+                tooltipTitle.className = 'text-xs font-bold text-textSecondary mb-1 uppercase tracking-wider';
+                tooltipMsg.innerText = 'The red progress bar sits at the very bottom edge.';
+                inZone = true;
+            }
+
+            if (inZone) {
+                tooltip.classList.remove('hidden');
+                // Position tooltip
+                const tooltipRect = tooltip.getBoundingClientRect();
+                let tx = e.clientX - rect.left + 15;
+                let ty = e.clientY - rect.top + 15;
+                
+                // Keep inside container
+                if (tx + tooltipRect.width > rect.width) tx = e.clientX - rect.left - tooltipRect.width - 15;
+                if (ty + tooltipRect.height > rect.height) ty = e.clientY - rect.top - tooltipRect.height - 15;
+
+                tooltip.style.left = `${tx}px`;
+                tooltip.style.top = `${ty}px`;
+            } else {
+                tooltip.classList.add('hidden');
+            }
+        });
+
+        previewCanvas.addEventListener('mouseleave', () => {
+            tooltip.classList.add('hidden');
+        });
+
+        uploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (event) => processImageSource(event.target.result);
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        });
+
+        function processImageSource(src) {
+            const img = new Image();
+            img.onload = async () => {
+                currentImage = img;
+                previewCanvas.width = img.width;
+                previewCanvas.height = img.height;
+                
+                // Update reality check images
+                document.querySelectorAll('.reality-check-img').forEach(el => el.src = src);
+                
+                dashboard.classList.remove('hidden');
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '100%';
+                
+                drawPreview();
+                
+                // Simulate processing time for UX
+                setTimeout(async () => {
+                    const engine = new ThumbHD_Engine(img, currentFile);
+                    const results = await engine.runAll();
+                    analysisResults = results;
+                    renderResults(results);
+                    drawPreview();
+                    progressContainer.classList.add('hidden');
+                    progressBar.style.width = '0%';
+                    dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 800);
+            };
+            img.onerror = () => alert("Invalid image format.");
+            img.src = src;
+        }
+
+        function drawPreview() {
+            if (!currentImage) return;
+            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            ctx.drawImage(currentImage, 0, 0, previewCanvas.width, previewCanvas.height);
+
+            if (showThirds) {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = Math.max(1, previewCanvas.width * 0.0015);
+                ctx.setLineDash([10, 10]);
+                
+                ctx.beginPath();
+                ctx.moveTo(previewCanvas.width / 3, 0); ctx.lineTo(previewCanvas.width / 3, previewCanvas.height);
+                ctx.moveTo((previewCanvas.width / 3) * 2, 0); ctx.lineTo((previewCanvas.width / 3) * 2, previewCanvas.height);
+                ctx.moveTo(0, previewCanvas.height / 3); ctx.lineTo(previewCanvas.width, previewCanvas.height / 3);
+                ctx.moveTo(0, (previewCanvas.height / 3) * 2); ctx.lineTo(previewCanvas.width, (previewCanvas.height / 3) * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            if (showSafe) {
+                const w = previewCanvas.width;
+                const h = previewCanvas.height;
+
+                // 1. Duration Badge (Bottom Right) - Most Critical
+                const durW = w * 0.16;
+                const durH = h * 0.13;
+                ctx.fillStyle = 'rgba(255, 45, 85, 0.4)';
+                ctx.fillRect(w - durW, h - durH, durW, durH);
+                
+                // 2. Watch Later / Queue (Top Right)
+                const trW = w * 0.12;
+                const trH = h * 0.25;
+                ctx.fillStyle = 'rgba(255, 184, 0, 0.3)';
+                ctx.fillRect(w - trW, 0, trW, trH);
+
+                // 3. Progress Bar Area (Bottom Edge)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(0, h - (h * 0.02), w, h * 0.02);
+
+                // Labels
+                ctx.font = `${Math.max(10, w * 0.02)}px JetBrains Mono`;
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'right';
+                ctx.fillText('DURATION BADGE', w - 10, h - durH - 10);
+                ctx.fillText('UI OVERLAYS', w - 10, trH + 20);
+
+                // Collision Warning
+                if (analysisResults) {
+                    const safeCheck = analysisResults.details.find(d => d.name === 'Safe Zone');
+                    if (safeCheck && !safeCheck.pass) {
+                        // Draw Warning Banner
+                        const bannerH = h * 0.15;
+                        ctx.fillStyle = 'rgba(255, 45, 85, 0.9)';
+                        ctx.fillRect(0, h/2 - bannerH/2, w, bannerH);
+                        
+                        ctx.fillStyle = '#fff';
+                        ctx.textAlign = 'center';
+                        ctx.font = `bold ${Math.max(14, w * 0.03)}px Inter`;
+                        ctx.fillText('⚠️ UI COLLISION DETECTED', w/2, h/2 - 5);
+                        ctx.font = `${Math.max(10, w * 0.02)}px Inter`;
+                        ctx.fillText('MOVE CRITICAL ELEMENTS OUT OF RED ZONES', w/2, h/2 + 20);
+                    }
+                }
+            }
+        }
+
+        function renderResults(data) {
+            // Update Score Board
+            const scoreText = document.getElementById('overall-score-text');
+            const scoreCircle = document.getElementById('score-circle');
+            const scoreStatus = document.getElementById('score-status');
+            const scoreSubtext = document.getElementById('score-subtext');
+            
+            scoreText.innerText = data.score;
+            
+            // Calculate stroke-dashoffset (251.2 is the circumference for r=40)
+            const offset = 251.2 - (251.2 * data.score) / 100;
+            scoreCircle.style.strokeDashoffset = offset;
+            
+            let colorClass = 'text-accentRed';
+            let strokeColor = '#ff2d55';
+            let statusHtml = '';
+            let subtextHtml = '';
+            
+            if (data.score >= 80) {
+                colorClass = 'text-accentGreen';
+                strokeColor = '#1ed760';
+                statusHtml = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Excellent`;
+                subtextHtml = `+${data.score - 72} above avg (72)`;
+            } else if (data.score >= 60) {
+                colorClass = 'text-accentAmber';
+                strokeColor = '#ffb800';
+                statusHtml = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Above Average`;
+                subtextHtml = `+${data.score - 50} above avg (50)`;
+            } else {
+                colorClass = 'text-accentRed';
+                strokeColor = '#ff2d55';
+                statusHtml = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Below Average`;
+                subtextHtml = `${data.score - 50} below avg (50)`;
+            }
+            
+            scoreText.className = `text-5xl font-heading font-bold ${colorClass}`;
+            scoreCircle.setAttribute('stroke', strokeColor);
+            scoreStatus.innerHTML = statusHtml;
+            scoreStatus.className = `flex items-center gap-2 font-bold text-lg mb-2 ${colorClass}`;
+            scoreSubtext.innerHTML = subtextHtml;
+            scoreSubtext.className = `text-sm font-mono ${colorClass}`;
+            
+            let html = '';
+            
+            const iconMap = {
+                "Contrast": "🌗",
+                "Text Contrast": "🔠",
+                "Subject": "👨‍🦲",
+                "Text Density": "📝",
+                "Vibrancy": "⚡",
+                "Brightness": "💡",
+                "Safe Zone": "🚫",
+                "Sharpness": "🔍",
+                "Resolution": "📏"
+            };
+
+            data.details.forEach(r => {
+                const pts = r.pass ? r.weight : 0;
+                let color = r.pass ? '#1ed760' : '#ff2d55';
+                let borderColor = r.pass ? 'rgba(30, 215, 96, 0.3)' : 'rgba(255, 45, 85, 0.3)';
+                
+                let statusText = r.pass ? 'excellent' : 'action required';
+                let valueText = `${r.value} — ${statusText}`;
+                
+                let actionHtml = '';
+                if (!r.pass) {
+                    actionHtml = `
+                    <div class="flex items-center gap-2 mt-4 pt-4 border-t border-borderDim">
+                        <div class="flex items-center gap-1.5 px-2 py-1 rounded border border-[#ff2d55]/30 bg-[#ff2d55]/10 text-[#ff2d55] text-[9px] font-mono uppercase tracking-wider">
+                            <div class="w-1.5 h-1.5 rounded-full bg-[#ff2d55]"></div>
+                            High CTR Impact
+                        </div>
+                        <button class="px-2 py-1 rounded border border-borderDim text-textSecondary text-[9px] font-mono uppercase tracking-wider hover:text-textPrimary hover:border-textSecondary transition-colors ml-auto">
+                            Fix Tool &rarr;
+                        </button>
+                    </div>`;
+                }
+
+                html += `
+                    <div class="glass-card p-5 flex flex-col relative transition-colors duration-300" style="border-color: ${borderColor}; background: #0e0e16;">
+                        <!-- Top Right Dot -->
+                        <div class="absolute top-4 right-4 w-2 h-2 rounded-full shadow-[0_0_8px_${color}]" style="background-color: ${color}"></div>
+                        
+                        <!-- Icon -->
+                        <div class="text-xl mb-3">${iconMap[r.name] || '✨'}</div>
+                        
+                        <!-- Title -->
+                        <div class="text-[10px] font-mono text-textSecondary uppercase tracking-wider mb-1">
+                            ${r.name} • ${r.weight}PTS
+                        </div>
+                        
+                        <!-- Score -->
+                        <div class="flex items-baseline gap-1 mb-2">
+                            <span class="text-3xl font-bold font-heading" style="color: ${color}">${pts}</span>
+                            <span class="text-xs text-textSecondary font-mono">/${r.weight}</span>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full h-1 bg-[#1e1e2a] rounded-full overflow-hidden mb-3">
+                            <div class="h-full rounded-full" style="width: ${(pts/r.weight)*100}%; background-color: ${color}"></div>
+                        </div>
+                        
+                        <!-- Value Text -->
+                        <div class="text-[10px] font-mono text-textSecondary mb-2 uppercase tracking-wider">
+                            ${valueText}
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="text-sm text-textSecondary leading-relaxed flex-grow">
+                            ${r.msg}
+                        </div>
+
+                        ${actionHtml}
+                    </div>
+                `;
+            });
+
+            resultsList.innerHTML = html;
+
+            // --- Action Plan Generation ---
+            const actionPlanContainer = document.getElementById('action-plan-container');
+            const failedDetails = data.details.filter(r => !r.pass);
+            
+            if (failedDetails.length > 0) {
+                actionPlanContainer.classList.remove('hidden');
+                actionPlanContainer.classList.add('flex');
+                
+                const highImpactCount = failedDetails.filter(r => r.weight >= 10).length;
+                const estGain = failedDetails.reduce((sum, r) => sum + r.weight, 0);
+                const failedNames = failedDetails.map(r => r.name).join(', ');
+                
+                const actionPlanData = {
+                    "Contrast": { impact: "HIGH IMPACT", color: "#ff2d55", title: "Fix contrast ratio — text is blending into the background.", desc: "Low contrast makes your thumbnail unreadable on small screens or when viewers are scrolling fast.", fix: "Add a heavy drop shadow (80% opacity, 15px blur) behind text. Use high-contrast color pairings like Electric Yellow (#FFE600) on dark backgrounds.", time: "5 MIN", tags: ["DESIGN", "15PT WEIGHT", "CRITICAL"] },
+                    "Text Contrast": { impact: "HIGH IMPACT", color: "#ff2d55", title: "Improve text legibility — words are hard to distinguish.", desc: "If viewers can't read your hook in 0.5 seconds, they won't click. Your text color is too similar to the background.", fix: "Add a 100% black stroke (outline) or a dark semi-transparent box behind your text. Ensure a 4.5:1 contrast ratio.", time: "3 MIN", tags: ["READABILITY", "15PT WEIGHT", "CRITICAL"] },
+                    "Subject": { impact: "HIGH IMPACT", color: "#ff2d55", title: "Add a human face — this is your single biggest CTR lever.", desc: "Thumbnails with a prominent human face get 2-3x higher click rates. Viewers' brains are hardwired to seek faces for emotional information.", fix: "Position face in the left-center third. Show intense emotion (shock, joy, focus). Fill at least 30-40% of frame height. Direct eye contact adds 20% more clicks.", time: "RESHOOT", tags: ["PSYCHOLOGY", "15PT WEIGHT", "CRITICAL"] },
+                    "Text Density": { impact: "HIGH IMPACT", color: "#ff2d55", title: "Reduce to 3-5 power words maximum — text overload is the #2 CTR killer.", desc: "High visual complexity detected. At thumbnail size, too much text collapses into unreadable noise that viewers' eyes skip entirely.", fix: "Every word must raise curiosity or urgency. Delete all adjectives. Use ALL CAPS for 1-2 keywords only. Minimum font size: 60px at 1280x720.", time: "10 MIN", tags: ["COPYWRITING", "15PT WEIGHT", "CRITICAL"] },
+                    "Vibrancy": { impact: "MED IMPACT", color: "#ffb800", title: "Boost color saturation — thumbnail looks 'muddy' or washed out.", desc: "YouTube's UI is bright white or pitch black. Low-vibrancy images fail to stand out against the platform's interface.", fix: "Increase global saturation by +20 to +30. Selectively boost the vibrance of your primary subject or background to create color separation.", time: "2 MIN", tags: ["COLOR", "12PT WEIGHT", "WARNING"] },
+                    "Brightness": { impact: "MED IMPACT", color: "#ffb800", title: "Increase exposure by +15-25% — dark thumbnails vanish on mobile screens.", desc: "Mobile devices are often viewed outdoors, where screen brightness battles sunlight. Your thumbnail needs to remain visible at 50% screen brightness.", fix: "Adjust Brightness +30-40 or Exposure +0.5 to +0.8 stops. The brightest highlight in your thumbnail should approach pure white.", time: "3 MIN", tags: ["LIGHTING", "10PT WEIGHT", "WARNING"] },
+                    "Safe Zone": { impact: "HIGH IMPACT", color: "#ff2d55", title: "Clear the bottom-right corner — UI Collision detected.", desc: "YouTube places a black duration badge in the bottom-right corner of every thumbnail. You have high-contrast elements in this dead zone.", fix: "Move any text, faces, or critical visual hooks away from the bottom-right 15% of the canvas. Shift elements to the left or top.", time: "5 MIN", tags: ["LAYOUT", "10PT WEIGHT", "CRITICAL"] },
+                    "Sharpness": { impact: "LOW IMPACT", color: "#00d4ff", title: "Sharpen the image — blurry edges signal low production value.", desc: "The image lacks crisp edge definition, which can make the video feel amateurish or low-quality before they even click.", fix: "Apply a Smart Sharpen or Unsharp Mask filter (Amount 50-100%, Radius 1-2px). Ensure your source image is in focus.", time: "2 MIN", tags: ["FILTER", "5PT WEIGHT", "INFO"] },
+                    "Resolution": { impact: "LOW IMPACT", color: "#00d4ff", title: "Fix aspect ratio or resolution — avoid black letterbox bars.", desc: "Your image is not standard 16:9 HD. YouTube will add ugly black bars to the top/bottom or sides to force it to fit.", fix: "Crop or resize your canvas to exactly 1280x720 pixels (or 1920x1080) before exporting.", time: "2 MIN", tags: ["EXPORT", "3PT WEIGHT", "INFO"] }
+                };
+
+                let cardsHtml = failedDetails.map((r, index) => {
+                    const plan = actionPlanData[r.name];
+                    if(!plan) return '';
+                    
+                    const tagsHtml = plan.tags.map(t => `<span class="px-2 py-1 rounded bg-bgVoid border border-borderDim text-[9px] font-mono text-textSecondary uppercase tracking-wider">${t}</span>`).join('');
+                    
+                    return `
+                        <div class="glass-card p-6 flex flex-col md:flex-row gap-6 items-start">
+                            <div class="flex flex-col items-center gap-3 shrink-0 w-24">
+                                <div class="w-8 h-8 rounded-full bg-[${plan.color}]/10 border border-[${plan.color}]/30 flex items-center justify-center text-[${plan.color}] font-bold font-mono text-sm">
+                                    ${index + 1}
+                                </div>
+                                <div class="flex items-center gap-1.5 px-2 py-1 rounded border border-[${plan.color}]/30 bg-[${plan.color}]/10 text-[${plan.color}] text-[8px] font-mono uppercase tracking-wider whitespace-nowrap">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-[${plan.color}]"></div>
+                                    ${plan.impact}
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-textPrimary font-bold text-base mb-2">${plan.title}</h4>
+                                <p class="text-textSecondary text-sm leading-relaxed mb-2">${plan.desc} <span class="text-accentCyan">${plan.fix}</span></p>
+                                <div class="flex flex-wrap gap-2 mt-4">
+                                    <span class="px-2 py-1 rounded bg-accentCyan/10 border border-accentCyan/30 text-accentCyan text-[9px] font-mono uppercase tracking-wider flex items-center gap-1">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                        ${plan.time}
+                                    </span>
+                                    ${tagsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                actionPlanContainer.innerHTML = `
+                    <div class="flex items-center gap-2 text-xs font-mono text-textSecondary uppercase tracking-[0.2em] mb-2">
+                        <div class="w-2 h-2 rounded-full bg-accentCyan"></div>
+                        CTR Intelligence Report
+                    </div>
+                    
+                    <!-- Stats Row -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+                        <div class="glass-card p-5">
+                            <div class="text-3xl font-heading font-bold ${colorClass} mb-1">${data.score}</div>
+                            <div class="text-xs font-mono text-textSecondary">Current CTR Score</div>
+                        </div>
+                        <div class="glass-card p-5">
+                            <div class="text-3xl font-heading font-bold text-accentRed mb-1">${failedDetails.length}</div>
+                            <div class="text-xs font-mono text-textSecondary">Critical Issues</div>
+                        </div>
+                        <div class="glass-card p-5">
+                            <div class="text-3xl font-heading font-bold text-accentAmber mb-1">${highImpactCount}</div>
+                            <div class="text-xs font-mono text-textSecondary">High CTR-Impact</div>
+                        </div>
+                        <div class="glass-card p-5">
+                            <div class="text-3xl font-heading font-bold text-accentCyan mb-1">+${estGain}%</div>
+                            <div class="text-xs font-mono text-textSecondary">Est. Gain if Fixed</div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Box -->
+                    <div class="p-5 rounded-xl bg-accentRed/10 border-l-4 border-accentRed text-textPrimary text-sm leading-relaxed mb-4">
+                        <span class="font-bold">${data.score}/100</span> — ${failedDetails.length} critical issues detected: ${failedNames}. These represent approximately ${estGain} lost points. Fix these before publishing for maximum CTR performance.
+                    </div>
+
+                    <div class="text-xs font-mono text-textSecondary uppercase tracking-[0.2em] mb-2 mt-4">
+                        Prioritized Fixes — Sorted by CTR Impact
+                    </div>
+
+                    <!-- Fix Cards -->
+                    <div class="flex flex-col gap-4">
+                        ${cardsHtml}
+                    </div>
+                `;
+            } else {
+                actionPlanContainer.classList.add('hidden');
+                actionPlanContainer.classList.remove('flex');
+            }
+
+            // --- Diagnostic Smart CTA ---
+            const analysisResults = {
+                fileSize: currentFile ? currentFile.size / (1024 * 1024) : 0,
+                checks: data.details,
+                score: data.score
+            };
+            
+            const nextSteps = determineNextSteps(analysisResults);
+            renderSmartCTA(nextSteps);
+        }
+
+        /**
+         * Determines the next best tools for the user based on their thumbnail analysis scores.
+         * Returns an array of recommendations based on all failed checks.
+         * 
+         * @param {Object} analysisResults - Contains fileSize, checks array, and score.
+         * @returns {Array} Array of recommendation objects.
+         */
+        function determineNextSteps(analysisResults) {
+            const recommendations = [];
+
+            // 1. File Size Check
+            if (analysisResults.fileSize > 2.0) {
+                recommendations.push({
+                    type: 'critical',
+                    title: 'File Size Too Large',
+                    message: 'Your file exceeds YouTube\'s 2MB limit. Shrink it without losing quality.',
+                    buttonText: 'Compress Image',
+                    url: '/youtube-thumbnail-compressor'
+                });
+            }
+
+            // 2. Map the 8 checks
+            analysisResults.checks.forEach(check => {
+                if (!check.pass) {
+                    switch(check.name) {
+                        case 'Contrast':
+                        case 'Text Contrast':
+                            recommendations.push({
+                                type: 'critical',
+                                title: 'Low Contrast',
+                                message: 'Your text or subject is blending into the background.',
+                                buttonText: 'Fix Contrast',
+                                url: '/youtube-thumbnail-contrast-analyzer'
+                            });
+                            break;
+                        case 'Subject':
+                            recommendations.push({
+                                type: 'warning',
+                                title: 'Missing Clear Subject',
+                                message: 'Lacks a clear focal point. See where viewers will look.',
+                                buttonText: 'Run Heatmap',
+                                url: '/youtube-thumbnail-heatmap-simulator'
+                            });
+                            break;
+                        case 'Text Density':
+                            recommendations.push({
+                                type: 'critical',
+                                title: 'Text-Heavy Design',
+                                message: 'Too much text clutters your design. Move extra words to your title.',
+                                buttonText: 'Optimize Title',
+                                url: '/youtube-title-length-checker'
+                            });
+                            break;
+                        case 'Vibrancy':
+                            recommendations.push({
+                                type: 'warning',
+                                title: 'Muddy Colors',
+                                message: 'Colors lack pop. Analyze your palette to find better combinations.',
+                                buttonText: 'Analyze Colors',
+                                url: '/youtube-thumbnail-color-palette-extractor'
+                            });
+                            break;
+                        case 'Brightness':
+                            recommendations.push({
+                                type: 'warning',
+                                title: 'Image Too Dark',
+                                message: 'Dangerously dark for mobile viewing. Adjust the exposure.',
+                                buttonText: 'Fix Brightness',
+                                url: '/youtube-thumbnail-brightness-analyzer'
+                            });
+                            break;
+                        case 'Safe Zone':
+                            recommendations.push({
+                                type: 'critical',
+                                title: 'UI Collision',
+                                message: 'Important elements are in YouTube\'s UI safe zones.',
+                                buttonText: 'Crop Image',
+                                url: '/youtube-thumbnail-resizer-cropper'
+                            });
+                            break;
+                        case 'Sharpness':
+                            recommendations.push({
+                                type: 'warning',
+                                title: 'Blurry Edges',
+                                message: 'Image lacks crispness. Adjust sharpness and brightness.',
+                                buttonText: 'Fix Sharpness',
+                                url: '/youtube-thumbnail-brightness-analyzer'
+                            });
+                            break;
+                        case 'Resolution':
+                            recommendations.push({
+                                type: 'warning',
+                                title: 'Incorrect Resolution',
+                                message: 'Not standard 16:9 HD. Resize to 1280x720 to avoid black bars.',
+                                buttonText: 'Resize Image',
+                                url: '/youtube-thumbnail-resizer-cropper'
+                            });
+                            break;
+                    }
+                }
+            });
+
+            // Deduplicate recommendations (e.g., Safe Zone and Resolution both point to cropper)
+            const uniqueRecommendations = [];
+            const seenUrls = new Set();
+            for (const rec of recommendations) {
+                if (!seenUrls.has(rec.url)) {
+                    seenUrls.add(rec.url);
+                    uniqueRecommendations.push(rec);
+                }
+            }
+
+            // If score >= 80 or no errors, recommend Preview Simulator
+            if (analysisResults.score >= 80 || uniqueRecommendations.length === 0) {
+                uniqueRecommendations.push({
+                    type: 'success',
+                    title: 'Thumbnail Optimized!',
+                    message: 'Great score! Now simulate how it looks against your real YouTube competitors.',
+                    buttonText: 'Simulate Now',
+                    url: '/youtube-thumbnail-preview-simulator'
+                });
+            }
+
+            return uniqueRecommendations;
+        }
+
+        /**
+         * Dynamically generates the HTML block for the Smart CTAs and injects it into the DOM.
+         * 
+         * @param {Array} recommendations - The array returned by determineNextSteps()
+         */
+        function renderSmartCTA(recommendations) {
+            const container = document.getElementById('diagnostic-cta-container');
+            
+            if (!container) {
+                console.warn('Diagnostic CTA container not found in the DOM.');
+                return;
+            }
+
+            if (recommendations.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="w-full mb-6 mt-8">
+                    <h3 class="text-2xl font-heading font-bold text-textPrimary text-center">Recommended Next Steps</h3>
+                    <p class="text-textSecondary text-center mt-2">Use these tools to fix your specific thumbnail issues.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            `;
+
+            recommendations.forEach(rec => {
+                const alertClass = `alert-${rec.type}`;
+                html += `
+                    <div class="smart-cta-card ${alertClass} animate-fade-in" style="margin-top: 0; padding: 24px; height: 100%; justify-content: space-between;">
+                        <div class="flex flex-col items-center gap-3">
+                            <h3 class="smart-cta-title" style="font-size: 1.25rem;">${rec.title}</h3>
+                            <p class="smart-cta-message" style="font-size: 0.95rem;">${rec.message}</p>
+                        </div>
+                        <div style="width: 100%; margin-top: 20px;">
+                            <a href="${rec.url}" class="smart-cta-btn" style="width: 100%; font-size: 1rem; padding: 12px;">
+                                ${rec.buttonText}
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+    </script>
+    <script src="/global-ui.js"></script>
+</body>
+</html>
